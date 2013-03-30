@@ -91,14 +91,29 @@ class phabricator (
     require => File[$confdir],
   }
 
+  # Because we want phabricator to load its db schemata for the first
+  # time after creating this file, we notify to upgrade_storage; we do
+  # it here because this is where we end the db configuration. We also
+  # want mysql::server to be configured with the correct password and,
+  # therefore, we ensure this dependency.
   file { 'ENVIRONMENT':
     ensure  => present,
     path    => "${phabdir}/conf/local/ENVIRONMENT",
     content => "custom/default",
     require => [
+      Class['mysql::server'],
       Package['httpd'],
       File[$conffile],
     ],
-    notify  => Service['httpd'],
+    notify  => [
+      Service['httpd'],
+      Exec['upgrade_storage'],
+    ],
+  }
+
+  exec { 'upgrade_storage':
+    command     => "${phabdir}/bin/storage upgrade --force",
+    require     => Service['mysqld'],
+    refreshonly => true,
   }
 }
