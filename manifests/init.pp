@@ -4,6 +4,7 @@ class phabricator (
   $mysql_rootpass = '',
   $owner = 'root',
   $group = 'root',
+  $conftemplate = '',
 ) {
   # Install mysql and php modules
   
@@ -75,6 +76,12 @@ class phabricator (
 
   $conffile = 'default.conf.php' # Phabricator configuration file
 
+  if $conftemplate == '' {
+    $cnftemplate = template("phabricator/${conffile}.erb")
+  } else {
+    $cnftemplate = $conftemplate
+  }
+
   file { $confdir:
     ensure => directory,
     owner  => $owner,
@@ -85,10 +92,11 @@ class phabricator (
   file { $conffile:
     ensure  => present,
     path    => "${confdir}/${conffile}",
-    content => template("phabricator/${conffile}.erb"),
+    content => $cnftemplate,
     owner   => $owner,
     group   => $group,
     require => File[$confdir],
+    notify  => Service['httpd'],
   }
 
   # Because we want phabricator to load its db schemata for the first
