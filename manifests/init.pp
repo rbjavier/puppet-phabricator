@@ -69,6 +69,17 @@ class phabricator (
     require  => Git::Repo[$phabdir],
   }
 
+  # Add host entry for the FQDN (hostname)
+  # We assume that the FQDN should map to localhost. We set this host
+  # entry so the name resolution does not depend on a correct DNS
+  # server configuration; as a consequence, even a test environment
+  # should work without name resolution problems (as an example,
+  # consider that if there is a name resolution problem, the phd
+  # launcher won't work).
+  host { $hostname:
+    ip => '127.0.0.1',
+  }
+
   # Set default configuration
   # We use a template configuration file with the mysql root password
 
